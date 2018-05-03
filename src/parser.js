@@ -49,6 +49,7 @@ var defaults = {
 
 var block = {
   newline: /^\n+/,
+  video: /^@\[(youtube|vimeo)\]\(src\)/,
   image: /^!\[(alt)\]\(src\)/,
   code: /^( {4}[^\n]+\n*)+/,
   fences: noop,
@@ -56,10 +57,10 @@ var block = {
   heading: /^ *(#{1,6}) *([^\n]+?) *#* *(?:\n|$)/,
   nptable: noop,
   lheading: /^([^\n]+)\n *(=|-){2,} *(?:\n|$)/,
-  blockquote: /^( *>[^\n]+(\n(?!def|image)[^\n]+)*(?:\n|$))+/,
+  blockquote: /^( *>[^\n]+(\n(?!def|video|image)[^\n]+)*(?:\n|$))+/,
   list: /^( *)(bull) [\s\S]+?(?:hr|def|\n(?! )(?!\1bull )\n|\s*$)/,
   def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +["(]([^\n]+)[")])? *(?:\n|$)/,
-  paragraph: /^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|def|image))+)(?:\n|$)/,
+  paragraph: /^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|def|video|image))+)(?:\n|$)/,
   text: /^[^\n]+/
 };
 
@@ -67,6 +68,7 @@ block._alt = /(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*/;
 block._src = /\s*<?([\s\S]*?)>?(?:\s+['"]([\s\S]*?)['"])?\s*/;
 
 block.image = replace(block.image)("alt", block._alt)("src", block._src)();
+block.video = replace(block.video)("src", block._src)();
 
 block.bullet = /(?:[*+-]|\d+\.|\[[x\s]\])/;
 block.item = /^( *)(bull) [^\n]*(?:\n(?!\1bull )[^\n]*)*/;
@@ -78,6 +80,9 @@ block.list = replace(block.list)(/bull/g, block.bullet)(
 )("def", "\\n+(?=" + block.def.source + ")")();
 
 block.blockquote = replace(block.blockquote)("def", block.def)(
+  "video",
+  block.video
+)(
   "image",
   block.image
 )();
@@ -85,10 +90,14 @@ block.blockquote = replace(block.blockquote)("def", block.def)(
 block.paragraph = replace(block.paragraph)("hr", block.hr)(
   "heading",
   block.heading
-)("lheading", block.lheading)("blockquote", block.blockquote)(
+)(
+  "lheading", block.lheading)("blockquote", block.blockquote)(
   "def",
   block.def
-)("image", block.image)();
+)(
+  "video", block.video
+)(
+  "image", block.image)();
 
 /**
  * Normal Block Grammar
@@ -204,6 +213,17 @@ Lexer.prototype.token = function(src, top, bq) {
           });
         }
       }
+    }
+
+    // video
+    if ((cap = this.rules.video.exec(src))) {
+      src = src.substring(cap[0].length);
+      this.tokens.push({
+        type: "video",
+        site: cap[1],
+        src: cap[2]
+      });
+      continue;
     }
 
     // image
@@ -949,6 +969,26 @@ Renderer.prototype.image = function(src, alt) {
   };
 };
 
+Renderer.prototype.video = function(src, site) {
+
+  return {
+    object: "block",
+    type: "video",
+    nodes: [
+      {
+        object: "text",
+        leaves: [
+          {
+            text: ""
+          }
+        ]
+      }
+    ],
+    isVoid: true,
+    data: { src, site }
+  };
+};
+
 Renderer.prototype.text = function(childNode) {
   return new TextNode(childNode);
 };
@@ -1044,6 +1084,9 @@ Parser.prototype.tok = function() {
           }
         ]
       };
+    }
+    case "video": {
+      return this.renderer.video(this.token.src, this.token.site)
     }
     case "image": {
       return this.renderer.image(this.token.src, this.token.alt)
