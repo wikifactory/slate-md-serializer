@@ -513,7 +513,7 @@ Lexer.prototype.token = function(src, top, bq) {
  */
 
 var inline = {
-  escape: /^\\([\\`*{}\[\]()#+\-.!_>])/,
+  escape: /^\\([\\`*{}\[\]()#+\-\.!_>])/,
   link: /^\[(inside)\]\(href\)/,
   reflink: /^!?\[(inside)\]\s*\[([^\]]*)\]/,
   nolink: /^!?\[((?:\[[^\]]*\]|[^\[\]])*)\]/,
@@ -908,9 +908,9 @@ Renderer.prototype.br = function() {
 Renderer.prototype.del = function(childNode) {
   return childNode.map(node => {
     if (node.marks) {
-      node.marks.push({ type: "deleted" });
+      node.marks.push({ type: "strikethrough" });
     } else {
-      node.marks = [{ type: "deleted" }];
+      node.marks = [{ type: "strikethrough" }];
     }
     return node;
   });

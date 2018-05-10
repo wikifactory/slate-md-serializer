@@ -20,7 +20,7 @@ const RULES = [
   {
     serialize(obj, children) {
       if (obj.object === "string") {
-        return children;
+        return children.replace(/[\\*_#]/g, "\\$&");
       }
     }
   },
@@ -134,7 +134,7 @@ const RULES = [
           return `\`${children}\``;
         case "inserted":
           return `++${children}++`;
-        case "deleted":
+        case "strikethrough":
           return `~~${children}~~`;
       }
     }
@@ -158,7 +158,8 @@ class Markdown {
 
   constructor(options = {}) {
     this.rules = [...(options.rules || []), ...RULES];
-
+    this.options = options;
+    this.deserialize = this.deserialize.bind(this);
     this.serializeNode = this.serializeNode.bind(this);
     this.serializeLeaves = this.serializeLeaves.bind(this);
     this.serializeString = this.serializeString.bind(this);
@@ -250,7 +251,7 @@ class Markdown {
    * @return {State} state
    */
   deserialize(markdown) {
-    const document = parser.parse(markdown);
+    const document = parser.parse(markdown, this.options);
     const state = Value.fromJSON({ document });
     return state;
   }
