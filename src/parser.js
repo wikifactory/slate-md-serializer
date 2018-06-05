@@ -49,8 +49,8 @@ var defaults = {
 
 var block = {
   newline: /^\n+/,
-  video: /^@\[(youtube|vimeo)\]\(src\)/,
-  image: /^!\[(alt)\]\(src\)/,
+  video: /^@\[(youtube|vimeo)\]\(src\) *(?:\n|$)/,
+  image: /^!\[(alt)\]\(src\) *(?:\n|$)/,
   code: /^( {4}[^\n]+\n*)+/,
   fences: noop,
   hr: /^( *[-*_]){3,} *(?:\n|$)/,
@@ -954,16 +954,6 @@ Renderer.prototype.image = function(src, alt) {
   return {
     object: "block",
     type: "image",
-    nodes: [
-      {
-        object: "text",
-        leaves: [
-          {
-            text: ""
-          }
-        ]
-      }
-    ],
     isVoid: true,
     data: data
   };
@@ -974,16 +964,6 @@ Renderer.prototype.video = function(src, site) {
   return {
     object: "block",
     type: "video",
-    nodes: [
-      {
-        object: "text",
-        leaves: [
-          {
-            text: ""
-          }
-        ]
-      }
-    ],
     isVoid: true,
     data: { src, site }
   };
