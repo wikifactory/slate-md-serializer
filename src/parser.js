@@ -787,7 +787,7 @@ Renderer.prototype.code = function(childNode, lang) {
 
   return {
     object: "block",
-    type: "code",
+    type: "codeBlock",
     data,
     nodes: this.groupTextInLeaves(childNode)
   };

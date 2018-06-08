@@ -62,9 +62,9 @@ const RULES = [
           return `| ${children} `;
         case "paragraph":
           return children;
-        case "code":
+        case "codeBlock":
           return `\`\`\`\n${children}\n\`\`\``;
-        case "code-line":
+        case "codeLine":
           return `${children}\n`;
         case "block-quote":
           return `> ${children}`;
